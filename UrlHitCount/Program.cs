@@ -22,18 +22,31 @@ namespace UrlHitCount {
                 Console.WriteLine($"File at {filePath} does not exist.");
                 return;
             }
-            ReadData(filePath);
-            DisplayData();
+            var success = ReadData(filePath);
+            if (success) {
+                DisplayData();
+            }
 
             Console.ReadKey();
         }
 
-        public static void ReadData(string filePath) {
+        public static bool ReadData(string filePath) {
+            int lineNumber = 1;
             // Open the file
             // Read the file line by line
             foreach (var line in File.ReadLines(filePath)) {
                 var splitLine = line.Split('|');
+                if (splitLine.Length < 2) {
+                    Console.WriteLine($"Missing data on line: {lineNumber}");
+                    return false;
+                }
+
                 // Check the input date from unix epoch and translate to datetime
+                var isNumber = long.TryParse(splitLine[0].Trim(), out long n);
+                if (!isNumber) {
+                    Console.WriteLine($"Epoch Time is incorrect on line: {lineNumber}");
+                    return false;
+                }
                 var date = ConvertDate(splitLine[0].Trim());
                 var url = splitLine[1].Trim();
 
@@ -51,7 +64,10 @@ namespace UrlHitCount {
                     var innerDictionary = new Dictionary<string, int>(){ { url, 1 } };
                     _dictionary.Add(date, innerDictionary);
                 }
-            }
+                lineNumber++;
+            } // foreach
+
+            return true;
         } // Read Data
 
         public static string ConvertDate(string epochDate) {
